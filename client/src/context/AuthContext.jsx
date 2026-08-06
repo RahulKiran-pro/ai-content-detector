@@ -23,22 +23,49 @@ export function AuthProvider({ children }) {
     }
   }, [token]);
 
+  const safeFetchJson = async (url, options = {}) => {
+    let res;
+    try {
+      res = await fetch(url, options);
+    } catch (netErr) {
+      throw new Error(`Connection error (${netErr.message || 'Failed to fetch'}). Please verify backend status and VITE_API_URL deployment configuration.`);
+    }
+
+    const contentType = res.headers.get('content-type') || '';
+    let data = {};
+
+    if (contentType.includes('application/json')) {
+      try {
+        data = await res.json();
+      } catch (e) {
+        data = { error: 'Invalid JSON response received from backend.' };
+      }
+    } else {
+      const text = await res.text();
+      data = { error: text || `Server HTTP Error ${res.status}` };
+    }
+
+    if (!res.ok) {
+      throw new Error(data.message || data.error || `Server HTTP Error ${res.status}`);
+    }
+
+    return data;
+  };
+
   const fetchUserProfile = async (authToken) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      const data = await safeFetchJson(`${API_BASE_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
-      if (res.ok) {
-        const data = await res.json();
+      if (data && data.user) {
         setUser(data.user);
         localStorage.setItem('truthlens_user', JSON.stringify(data.user));
-      } else {
-        if (res.status === 401 || res.status === 403) {
-          logout();
-        }
       }
     } catch (e) {
-      console.warn('Profile fetch failed:', e);
+      console.warn('[Profile Fetch Warning]', e.message);
+      if (e.message.includes('401') || e.message.includes('403')) {
+        logout();
+      }
     } finally {
       setLoading(false);
     }
@@ -51,33 +78,29 @@ export function AuthProvider({ children }) {
   };
 
   const login = async (email, password) => {
-    const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    const data = await safeFetchJson(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.message || data.error || 'Login failed.');
+
+    if (data.token) {
+      setToken(data.token);
+      setUser(data.user);
+      localStorage.setItem('truthlens_token', data.token);
+      localStorage.setItem('truthlens_user', JSON.stringify(data.user));
+      setLoading(false);
     }
-    setToken(data.token);
-    setUser(data.user);
-    localStorage.setItem('truthlens_token', data.token);
-    localStorage.setItem('truthlens_user', JSON.stringify(data.user));
-    setLoading(false);
     return data;
   };
 
   const signup = async (name, email, password) => {
-    const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    const data = await safeFetchJson(`${API_BASE_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password })
     });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.message || data.error || 'Registration failed.');
-    }
+
     if (data.token) {
       setToken(data.token);
       setUser(data.user);
@@ -89,20 +112,19 @@ export function AuthProvider({ children }) {
   };
 
   const loginWithGoogle = async (idToken) => {
-    const res = await fetch(`${API_BASE_URL}/api/auth/google`, {
+    const data = await safeFetchJson(`${API_BASE_URL}/api/auth/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken })
     });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.message || data.error || 'Google login failed.');
+
+    if (data.token) {
+      setToken(data.token);
+      setUser(data.user);
+      localStorage.setItem('truthlens_token', data.token);
+      localStorage.setItem('truthlens_user', JSON.stringify(data.user));
+      setLoading(false);
     }
-    setToken(data.token);
-    setUser(data.user);
-    localStorage.setItem('truthlens_token', data.token);
-    localStorage.setItem('truthlens_user', JSON.stringify(data.user));
-    setLoading(false);
     return data;
   };
 
