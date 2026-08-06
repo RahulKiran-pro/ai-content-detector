@@ -737,14 +737,27 @@ export default function AIDetectionPanel() {
 
               {/* Action Toolbar */}
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => setShowFlaggedViewer(true)}
+                  className="apple-primary-button"
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: '0.82rem',
+                    background: aiScore >= 45 ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 'var(--apple-accent-gradient)'
+                  }}
+                >
+                  <AlertTriangle style={{ width: 15, height: 15 }} />
+                  <span>Generate Flagged Copy</span>
+                </button>
+
                 <button onClick={copyResultReport} className="apple-glass-button" style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
                   {copiedReport ? <Check style={{ width: 15, height: 15, color: '#10b981' }} /> : <Copy style={{ width: 15, height: 15 }} />}
                   <span>{copiedReport ? 'Copied' : 'Copy'}</span>
                 </button>
 
-                <button onClick={() => setShowReportModal(true)} className="apple-primary-button" style={{ padding: '8px 16px', fontSize: '0.82rem' }}>
-                  <Download style={{ width: 15, height: 15 }} />
-                  <span>Full PDF Report</span>
+                <button onClick={() => setShowReportModal(true)} className="apple-glass-button" style={{ padding: '8px 16px', fontSize: '0.82rem' }}>
+                  <FileText style={{ width: 15, height: 15 }} />
+                  <span>Full Report</span>
                 </button>
               </div>
             </div>
@@ -840,6 +853,10 @@ export default function AIDetectionPanel() {
           verificationData={resultData}
           report={verificationReport}
           onClose={() => setShowFlaggedViewer(false)}
+          onOpenFullReport={() => {
+            setShowFlaggedViewer(false);
+            setShowReportModal(true);
+          }}
         />
       )}
 
