@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'truthlens_super_secret_jwt_key_2026_hackathon';
+const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key_change_in_production';
 
 /**
  * Sign JWT token for user

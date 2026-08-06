@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-v18%2B-green.svg)](https://nodejs.org/)
-[![React](https://img.shields.io/badge/React-v18.2-61dafb.svg)](https://react.dev/)
+[![React](https://img.shields.io/badge/React-v18-61dafb.svg)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-v5.1-646cff.svg)](https://vitejs.dev/)
 [![Express](https://img.shields.io/badge/Express-v4.19-000000.svg)](https://expressjs.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248.svg)](https://www.mongodb.com/)
@@ -24,8 +24,8 @@
   - In-depth modal breakdowns featuring authenticity scores, confidence meters, threat levels, and exportable verification summaries.
 - **📜 Analysis History**:
   - Save scan results to your user account, search past audits, filter by media type, and re-examine detailed metrics.
-- **🔐 Secure Authentication**:
-  - JWT token authentication, salted password hashing with `bcryptjs`, and Google OAuth 2.0 single sign-on support.
+- **🔐 Secure Authentication & Session Guard**:
+  - JWT token authentication, salted password hashing with `bcryptjs`, protected routing guards, and session persistence.
 
 ---
 
@@ -33,50 +33,65 @@
 
 ### **Frontend**
 - **Framework**: React 18 with Vite
-- **UI & Icons**: Lucide React, DotLottie React, Custom CSS Glassmorphism Theme
-- **State Management**: React Context API (`AuthContext`)
+- **UI & Icons**: Lucide React, Custom Glassmorphic CSS Theme
+- **State & Routing**: React Context API (`AuthContext`), React Router v7
 
 ### **Backend**
 - **Runtime**: Node.js & Express.js
-- **Database**: MongoDB with Mongoose ORM
+- **Database**: MongoDB Atlas with Mongoose ORM
 - **Authentication**: JSON Web Tokens (JWT) & `bcryptjs`
-- **Security & Utilities**: Express Rate Limit, Multer (file handling), Axios, CORS
+- **Security**: Environment variable startup validation, CORS controls, Express Rate Limiter
 
 ### **AI Detection Engine**
 - **Service**: TruthScan API (dedicated multi-modal endpoints for text, image, audio, video, and PDF detection)
 
 ---
 
-## 📂 Project Structure
+## 🔐 Environment Variables & Production Security
 
-```
-Truth Lens AI/
-├── client/                     # Frontend Application (React + Vite)
-│   ├── src/
-│   │   ├── components/         # Core UI Components
-│   │   │   ├── AIDetectionPanel.jsx        # Main Detection & Upload Interface
-│   │   │   ├── AuthModal.jsx               # Login / Signup Modal
-│   │   │   ├── FlaggedMediaViewer.jsx      # Community Flagged Feed
-│   │   │   ├── HistoryPage.jsx             # User Scan History & Search
-│   │   │   └── VerificationReportModal.jsx # Comprehensive Scan Details
-│   │   ├── context/            # React Context (AuthContext)
-│   │   ├── App.jsx             # Root Component & Route Management
-│   │   └── index.css           # Global Glassmorphic CSS Theme
-│   ├── package.json
-│   └── vite.config.js
-│
-├── server/                     # Backend API (Node.js + Express)
-│   ├── config/                 # Database Configuration (`db.js`)
-│   ├── middleware/             # Auth JWT verification & Rate Limiter
-│   ├── models/                 # Mongoose Schemas (User, DetectionHistory, FlaggedContent)
-│   ├── routes/                 # API Routes (auth, detect, history, flagged)
-│   ├── services/               # TruthScan API Service Integration (`truthscanService.js`)
-│   ├── .env.example            # Environment variables template
-│   └── index.js                # Server entry point
-│
-├── package.json                # Root workspace configuration & scripts
-└── README.md                   # Project Documentation
-```
+TruthLens AI follows strict zero-hardcoded-secret practices. All sensitive configuration keys are loaded exclusively through environment variables.
+
+### Environment Variable Reference
+
+| Variable Name | Required | Scope | Description | Default / Example |
+| :--- | :---: | :--- | :--- | :--- |
+| `PORT` | Optional | Backend | Server HTTP listening port | `5000` |
+| `NODE_ENV` | Optional | Backend | Runtime mode (`development` or `production`) | `production` |
+| `MONGODB_URI` | **Required** | Backend | MongoDB Atlas connection string | `mongodb+srv://...` |
+| `JWT_SECRET` | **Required** | Backend | Secret key used to sign and verify JWT tokens | `your_super_secret_jwt_key` |
+| `SESSION_SECRET` | Optional | Backend | Secret key for express session encryption | `your_session_secret` |
+| `TRUTHSCAN_API_KEY` | **Required** | Backend | TruthScan AI API secret authentication key | `your_truthscan_api_key` |
+| `TRUTHSCAN_BASE_URL` | Optional | Backend | Base URL endpoint for TruthScan API | `https://api.truthscan.com` |
+| `EMAIL_HOST` | Optional | Backend | SMTP server host for Nodemailer | `smtp.gmail.com` |
+| `EMAIL_PORT` | Optional | Backend | SMTP port number | `587` |
+| `EMAIL_USER` | Optional | Backend | SMTP username/email address | `your_email@gmail.com` |
+| `EMAIL_PASS` | Optional | Backend | SMTP app password | `your_app_password` |
+| `EMAIL_FROM` | Optional | Backend | Sender email header | `"TruthLens AI" <noreply@truthlens.ai>` |
+| `CLIENT_URL` | Optional | Backend | Allowed CORS origin for backend API | `https://your-frontend.vercel.app` |
+| `VITE_API_URL` | **Required** | Frontend | Backend API endpoint consumed by Vite client | `https://your-backend.onrender.com` |
+| `GOOGLE_CLIENT_ID` | Optional | Both | Google OAuth 2.0 Client ID | `your_google_client_id` |
+
+---
+
+### Deployment Guide
+
+#### 1. GitHub Repository Security
+- **Never commit `.env` files**: All `.env` files are explicitly excluded via `.gitignore`.
+- Use `.env.example` templates committed to version control with placeholder values only.
+
+#### 2. Vercel (Frontend Deployment)
+- Navigate to your project in Vercel: **Project Settings → Environment Variables**.
+- Add the following environment variable:
+  - `VITE_API_URL` = `https://your-render-backend-url.onrender.com`
+
+#### 3. Render (Backend Deployment)
+- Navigate to your service in Render: **Environment → Secret Files / Environment Variables**.
+- Configure the required backend variables:
+  - `NODE_ENV` = `production`
+  - `MONGODB_URI` = `mongodb+srv://user:pass@cluster.mongodb.net/dbname`
+  - `JWT_SECRET` = `your_strong_random_jwt_secret_key`
+  - `TRUTHSCAN_API_KEY` = `your_live_truthscan_api_key`
+  - `CLIENT_URL` = `https://your-vercel-app.vercel.app`
 
 ---
 
@@ -91,7 +106,7 @@ Truth Lens AI/
 
 ---
 
-### Installation
+### Installation & Local Setup
 
 1. **Clone the Repository**:
    ```bash
@@ -99,90 +114,20 @@ Truth Lens AI/
    cd ai-content-detector
    ```
 
-2. **Install Dependencies**:
-   Install root, server, and client dependencies using the root helper script:
+2. **Copy Environment Templates**:
    ```bash
-   npm run install:all
+   cp .env.example server/.env
+   cp client/.env.example client/.env
    ```
 
----
+3. **Fill in Environment Variables**:
+   Update `server/.env` with your local or MongoDB Atlas URI, JWT secret, and TruthScan API key.
 
-### Environment Setup
-
-Create a `.env` file inside the `server/` directory based on `server/.env.example`:
-
-```env
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/truth_lens_db
-JWT_SECRET=your_super_secret_jwt_key
-TRUTHSCAN_API_KEY=your_truthscan_api_key
-GOOGLE_CLIENT_ID=your_google_client_id
-```
-
----
-
-### Running the Application
-
-You can start both the backend server and client frontend using root commands:
-
-- **Start Backend Server**:
-  ```bash
-  npm run start:server
-  ```
-  *(Backend runs on `http://localhost:5000`)*
-
-- **Start Frontend Client**:
-  ```bash
-  npm run start:client
-  ```
-  *(Frontend dev server runs on `http://localhost:5173`)*
-
----
-
-## 📡 API Reference
-
-### Authentication (`/api/auth`)
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/api/auth/signup` | Register a new user account |
-| `POST` | `/api/auth/login` | Authenticate user & retrieve JWT token |
-| `POST` | `/api/auth/google` | Sign in / register via Google OAuth |
-| `GET` | `/api/auth/me` | Fetch current authenticated user profile |
-
-### Detection (`/api/detect`)
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/api/detect/text` | Analyze raw text or text file for AI generation |
-| `POST` | `/api/detect/image` | Upload and scan an image for AI generation or deepfakes |
-| `POST` | `/api/detect/audio` | Upload and scan audio for synthetic voice / voice cloning |
-| `POST` | `/api/detect/video` | Upload and analyze video for deepfakes & frame anomalies |
-| `POST` | `/api/detect/pdf` | Upload and scan PDF documents for AI content |
-
-### History & Audits (`/api/history`)
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/history` | Get user's scan history (supports type filtering & search) |
-| `POST` | `/api/history` | Save a new detection result to history |
-| `DELETE` | `/api/history/:id` | Delete a saved scan item |
-
-### Flagged Media (`/api/flagged`)
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/flagged` | Fetch community flagged media items |
-| `POST` | `/api/flagged` | Submit new media to the community flagged feed |
-| `POST` | `/api/flagged/:id/vote` | Upvote or downvote a flagged media submission |
-
----
-
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/RahulKiran-pro/ai-content-detector/issues).
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+4. **Install Dependencies & Start Application**:
+   ```bash
+   npm run start:server   # Runs backend on http://localhost:5000
+   npm run start:client   # Runs frontend on http://localhost:3000
+   ```
 
 ---
 
