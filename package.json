@@ -1,0 +1,11 @@
+{
+  "name": "truth-lens-ai-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Truth Lens AI - Hackathon Root Workspace",
+  "scripts": {
+    "start:server": "cd server && npm start",
+    "start:client": "cd client && npm start",
+    "install:all": "cd server && npm install && cd ../client && npm install"
+  }
+}
