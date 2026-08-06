@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../config/api';
 import { 
   FileText, 
   Image as ImageIcon, 
@@ -31,7 +32,7 @@ export default function HistoryPage({ onClose }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/history', {
+      const res = await fetch(`${API_BASE_URL}/api/history`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();

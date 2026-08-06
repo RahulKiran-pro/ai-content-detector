@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../config/api';
 import { 
   X, 
   ShieldCheck, 
@@ -51,7 +52,7 @@ export default function VerificationReportModal({ report, resultData, contentTyp
     e.preventDefault();
     setIsSubmittingReport(true);
     try {
-      await fetch('/api/flagged/submit-report', {
+      await fetch(`${API_BASE_URL}/api/flagged/submit-report`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

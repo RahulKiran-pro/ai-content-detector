@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { API_BASE_URL } from '../config/api';
 import { 
   FileText, 
   Image as ImageIcon, 
@@ -101,7 +102,7 @@ export default function AIDetectionPanel() {
 
   const fetchVerificationReport = async (data, type) => {
     try {
-      const res = await fetch('/api/flagged/report', {
+      const res = await fetch(`${API_BASE_URL}/api/flagged/report`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ detectionData: data, contentType: type })
@@ -124,7 +125,7 @@ export default function AIDetectionPanel() {
   const fetchCredits = async (type) => {
     setLoadingCredits(true);
     try {
-      const res = await fetch(`/api/detect/credits/${type}`);
+      const res = await fetch(`${API_BASE_URL}/api/detect/credits/${type}`);
       if (res.ok) {
         const text = await res.text();
         const data = text ? JSON.parse(text) : {};
@@ -165,7 +166,7 @@ export default function AIDetectionPanel() {
 
     pollIntervalRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`/api/detect/status/${type}/${id}`);
+        const res = await fetch(`${API_BASE_URL}/api/detect/status/${type}/${id}`);
         const text = await res.text();
         let data = {};
         try {
@@ -212,7 +213,7 @@ export default function AIDetectionPanel() {
     setIsSubmitting(true);
 
     try {
-      let url = `/api/detect/${activeTab}`;
+      let url = `${API_BASE_URL}/api/detect/${activeTab}`;
       let options = {};
 
       if (activeTab === 'text') {
@@ -264,7 +265,7 @@ export default function AIDetectionPanel() {
         data = text ? JSON.parse(text) : {};
       } catch (jsonErr) {
         if (res.status === 502 || res.status === 504 || !res.status) {
-          throw new Error('Backend server (http://localhost:5000) is unreachable. Please ensure the backend server is running.');
+          throw new Error('Backend server is unreachable. Please ensure the backend server is running and accessible.');
         }
         throw new Error(`Server returned non-JSON response (HTTP ${res.status}): ${text.substring(0, 150)}`);
       }
