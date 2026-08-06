@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema(
     },
     passwordHash: {
       type: String,
-      select: false // Do not include in queries by default for security
+      select: false
     },
     authProvider: {
       type: String,
@@ -32,6 +32,19 @@ const userSchema = new mongoose.Schema(
     avatarUrl: {
       type: String,
       default: ''
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user'
+    },
+    // Password Reset Fields
+    resetPasswordToken: {
+      type: String,
+      select: false
+    },
+    resetPasswordExpires: {
+      type: Date
     }
   },
   {
@@ -39,22 +52,25 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Method to verify password match
+// Method to verify password match using bcrypt
 userSchema.methods.comparePassword = async function (candidatePassword) {
-  if (!this.passwordHash) return false;
-  return bcrypt.compare(candidatePassword, this.passwordHash);
+  const hash = this.passwordHash || this.password;
+  if (!hash) return false;
+  return bcrypt.compare(candidatePassword, hash);
 };
 
-// Static helper to hash passwords
+// Static helper to hash passwords exactly once
 userSchema.statics.hashPassword = async function (password) {
   const salt = await bcrypt.genSalt(10);
   return bcrypt.hash(password, salt);
 };
 
-// Return clean JSON representation without passwordHash
+// Return clean JSON representation without sensitive fields
 userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.passwordHash;
+  delete obj.password;
+  delete obj.resetPasswordToken;
   delete obj.__v;
   return obj;
 };

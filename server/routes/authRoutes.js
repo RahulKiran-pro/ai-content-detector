@@ -8,23 +8,20 @@ const { getIsConnected } = require('../config/db');
 const router = express.Router();
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// Rate limiter for auth endpoints (max 15 requests per 15 minutes)
+// Rate limiter for auth endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 15,
+  max: 30,
   message: { error: 'Too many authentication attempts. Please try again after 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false
 });
 
-/**
- * Helper to handle async route errors
- */
 function asyncHandler(fn) {
   return (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(err => {
       const statusCode = err.status || err.statusCode || 500;
-      res.status(statusCode).json({ error: err.message || 'Authentication error' });
+      res.status(statusCode).json({ error: err.message || 'Authentication error', message: err.message || 'Authentication error' });
     });
   };
 }
@@ -32,151 +29,167 @@ function asyncHandler(fn) {
 // In-memory fallback user store if MongoDB is offline
 const inMemoryUsers = new Map();
 
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /**
- * POST /api/auth/signup
- * Email + Password Signup
+ * Registration Handler
+ * Hashes password exactly once, saves user, generates JWT, returns success, user, token.
  */
-router.post('/signup', authLimiter, asyncHandler(async (req, res) => {
+async function handleRegisterUser(req, res) {
   const { name, email, password } = req.body;
 
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'Please provide name, email, and password.' });
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Please provide email and password.', message: 'Please provide email and password.' });
   }
 
   if (password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+    return res.status(400).json({ error: 'Password must be at least 6 characters long.', message: 'Password must be at least 6 characters long.' });
   }
 
   const normalizedEmail = email.trim().toLowerCase();
+  const userName = (name || email.split('@')[0]).trim();
 
-  // If MongoDB is connected
   if (getIsConnected()) {
-    const existingUser = await User.findOne({ email: normalizedEmail });
+    const existingUser = await User.findOne({
+      $or: [
+        { email: normalizedEmail },
+        { email: new RegExp(`^${escapeRegExp(normalizedEmail)}$`, 'i') }
+      ]
+    });
+
     if (existingUser) {
-      return res.status(400).json({ error: 'An account with this email already exists.' });
+      return res.status(400).json({ error: 'An account with this email already exists.', message: 'An account with this email already exists.' });
     }
 
     const passwordHash = await User.hashPassword(password);
     const user = await User.create({
-      name: name.trim(),
+      name: userName,
       email: normalizedEmail,
       passwordHash,
-      authProvider: 'local'
+      authProvider: 'local',
+      role: 'user'
     });
 
     const token = generateToken(user);
     return res.status(201).json({
+      success: true,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        authProvider: user.authProvider,
-        avatarUrl: user.avatarUrl
-      }
+      user: user.toJSON(),
+      message: 'Registration successful!'
     });
   } else {
-    // In-memory fallback for demo/offline mode
+    // In-memory fallback
     if (inMemoryUsers.has(normalizedEmail)) {
-      return res.status(400).json({ error: 'An account with this email already exists.' });
+      return res.status(400).json({ error: 'An account with this email already exists.', message: 'An account with this email already exists.' });
     }
 
     const passwordHash = await User.hashPassword(password);
     const mockUser = {
       _id: `user_${Date.now()}`,
-      name: name.trim(),
+      name: userName,
       email: normalizedEmail,
       passwordHash,
       authProvider: 'local',
-      avatarUrl: ''
+      avatarUrl: '',
+      role: 'user'
     };
     inMemoryUsers.set(normalizedEmail, mockUser);
 
     const token = generateToken(mockUser);
     return res.status(201).json({
+      success: true,
       token,
-      user: {
-        id: mockUser._id,
-        name: mockUser.name,
-        email: mockUser.email,
-        authProvider: mockUser.authProvider,
-        avatarUrl: mockUser.avatarUrl
-      }
+      user: { id: mockUser._id, name: mockUser.name, email: mockUser.email, role: 'user' },
+      message: 'Registration successful!'
     });
   }
-}));
+}
+
+/**
+ * POST /api/auth/register & POST /api/auth/signup
+ */
+router.post('/register', authLimiter, asyncHandler(handleRegisterUser));
+router.post('/signup', authLimiter, asyncHandler(handleRegisterUser));
 
 /**
  * POST /api/auth/login
- * Email + Password Login
+ * Performs case-insensitive email lookup, compares password via bcrypt, returns user + token.
  */
 router.post('/login', authLimiter, asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ error: 'Please provide email and password.' });
+    return res.status(400).json({ error: 'Please provide email and password.', message: 'Please provide email and password.' });
   }
 
   const normalizedEmail = email.trim().toLowerCase();
-  const invalidMsg = 'Invalid email or password.';
+  const invalidMsg = 'Incorrect email or password.';
 
   if (getIsConnected()) {
-    const user = await User.findOne({ email: normalizedEmail }).select('+passwordHash');
+    let user = await User.findOne({ email: normalizedEmail }).select('+passwordHash +password');
     if (!user) {
-      return res.status(401).json({ error: invalidMsg });
+      user = await User.findOne({ email: new RegExp(`^${escapeRegExp(normalizedEmail)}$`, 'i') }).select('+passwordHash +password');
+    }
+
+    if (!user) {
+      const mockUser = inMemoryUsers.get(normalizedEmail);
+      if (mockUser) {
+        const bcrypt = require('bcryptjs');
+        const isMatch = await bcrypt.compare(password, mockUser.passwordHash);
+        if (isMatch) {
+          const token = generateToken(mockUser);
+          return res.json({
+            success: true,
+            token,
+            user: { id: mockUser._id, name: mockUser.name, email: mockUser.email, role: 'user' }
+          });
+        }
+      }
+      return res.status(401).json({ error: invalidMsg, message: invalidMsg });
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ error: invalidMsg });
+      return res.status(401).json({ error: invalidMsg, message: invalidMsg });
     }
 
     const token = generateToken(user);
     return res.json({
+      success: true,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        authProvider: user.authProvider,
-        avatarUrl: user.avatarUrl
-      }
+      user: user.toJSON()
     });
   } else {
     // In-memory fallback
     const mockUser = inMemoryUsers.get(normalizedEmail);
     if (!mockUser) {
-      return res.status(401).json({ error: invalidMsg });
+      return res.status(401).json({ error: invalidMsg, message: invalidMsg });
     }
 
     const bcrypt = require('bcryptjs');
     const isMatch = await bcrypt.compare(password, mockUser.passwordHash);
     if (!isMatch) {
-      return res.status(401).json({ error: invalidMsg });
+      return res.status(401).json({ error: invalidMsg, message: invalidMsg });
     }
 
     const token = generateToken(mockUser);
     return res.json({
+      success: true,
       token,
-      user: {
-        id: mockUser._id,
-        name: mockUser.name,
-        email: mockUser.email,
-        authProvider: mockUser.authProvider,
-        avatarUrl: mockUser.avatarUrl
-      }
+      user: { id: mockUser._id, name: mockUser.name, email: mockUser.email, role: 'user' }
     });
   }
 }));
 
 /**
  * POST /api/auth/google
- * Verify Google OAuth ID Token server-side
  */
 router.post('/google', asyncHandler(async (req, res) => {
   const { idToken } = req.body;
   if (!idToken) {
-    return res.status(400).json({ error: 'Missing Google ID token.' });
+    return res.status(400).json({ error: 'Missing Google ID token.', message: 'Missing Google ID token.' });
   }
 
   let payload;
@@ -187,8 +200,7 @@ router.post('/google', asyncHandler(async (req, res) => {
     });
     payload = ticket.getPayload();
   } catch (err) {
-    // For demo/hackathon flexibility, parse token or handle verification error
-    return res.status(401).json({ error: 'Failed to verify Google ID token with Google servers.' });
+    return res.status(401).json({ error: 'Failed to verify Google ID token.', message: 'Failed to verify Google ID token.' });
   }
 
   const { sub: googleId, email, name, picture: avatarUrl } = payload;
@@ -198,7 +210,6 @@ router.post('/google', asyncHandler(async (req, res) => {
     let user = await User.findOne({ $or: [{ googleId }, { email: normalizedEmail }] });
 
     if (user) {
-      // Link Google ID if signing in via Google with existing local account
       if (!user.googleId) {
         user.googleId = googleId;
         user.authProvider = 'both';
@@ -217,17 +228,11 @@ router.post('/google', asyncHandler(async (req, res) => {
 
     const token = generateToken(user);
     return res.json({
+      success: true,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        authProvider: user.authProvider,
-        avatarUrl: user.avatarUrl
-      }
+      user: user.toJSON()
     });
   } else {
-    // In-memory demo fallback
     let mockUser = inMemoryUsers.get(normalizedEmail);
     if (!mockUser) {
       mockUser = {
@@ -236,37 +241,34 @@ router.post('/google', asyncHandler(async (req, res) => {
         email: normalizedEmail,
         googleId,
         authProvider: 'google',
-        avatarUrl: avatarUrl || ''
+        avatarUrl: avatarUrl || '',
+        role: 'user'
       };
       inMemoryUsers.set(normalizedEmail, mockUser);
     }
 
     const token = generateToken(mockUser);
     return res.json({
+      success: true,
       token,
-      user: {
-        id: mockUser._id,
-        name: mockUser.name,
-        email: mockUser.email,
-        authProvider: mockUser.authProvider,
-        avatarUrl: mockUser.avatarUrl
-      }
+      user: { id: mockUser._id, name: mockUser.name, email: mockUser.email, role: 'user' }
     });
   }
 }));
 
 /**
  * GET /api/auth/me
- * Fetch authenticated user profile
  */
 router.get('/me', requireAuth, asyncHandler(async (req, res) => {
   res.json({
+    success: true,
     user: {
       id: req.user._id || req.user.id,
       name: req.user.name || req.user.email.split('@')[0],
       email: req.user.email,
       authProvider: req.user.authProvider || 'local',
-      avatarUrl: req.user.avatarUrl || ''
+      avatarUrl: req.user.avatarUrl || '',
+      role: req.user.role || 'user'
     }
   });
 }));

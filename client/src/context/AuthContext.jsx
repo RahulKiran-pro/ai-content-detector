@@ -33,13 +33,21 @@ export function AuthProvider({ children }) {
         setUser(data.user);
         localStorage.setItem('truthlens_user', JSON.stringify(data.user));
       } else {
-        logout();
+        if (res.status === 401 || res.status === 403) {
+          logout();
+        }
       }
     } catch (e) {
       console.warn('Profile fetch failed:', e);
     } finally {
       setLoading(false);
     }
+  };
+
+  const checkAuth = async () => {
+    if (!token) return false;
+    await fetchUserProfile(token);
+    return Boolean(token && user);
   };
 
   const login = async (email, password) => {
@@ -50,27 +58,33 @@ export function AuthProvider({ children }) {
     });
     const data = await res.json();
     if (!res.ok) {
-      throw new Error(data.error || 'Login failed.');
+      throw new Error(data.message || data.error || 'Login failed.');
     }
     setToken(data.token);
     setUser(data.user);
+    localStorage.setItem('truthlens_token', data.token);
     localStorage.setItem('truthlens_user', JSON.stringify(data.user));
+    setLoading(false);
     return data;
   };
 
   const signup = async (name, email, password) => {
-    const res = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+    const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password })
     });
     const data = await res.json();
     if (!res.ok) {
-      throw new Error(data.error || 'Signup failed.');
+      throw new Error(data.message || data.error || 'Registration failed.');
     }
-    setToken(data.token);
-    setUser(data.user);
-    localStorage.setItem('truthlens_user', JSON.stringify(data.user));
+    if (data.token) {
+      setToken(data.token);
+      setUser(data.user);
+      localStorage.setItem('truthlens_token', data.token);
+      localStorage.setItem('truthlens_user', JSON.stringify(data.user));
+      setLoading(false);
+    }
     return data;
   };
 
@@ -82,11 +96,13 @@ export function AuthProvider({ children }) {
     });
     const data = await res.json();
     if (!res.ok) {
-      throw new Error(data.error || 'Google login failed.');
+      throw new Error(data.message || data.error || 'Google login failed.');
     }
     setToken(data.token);
     setUser(data.user);
+    localStorage.setItem('truthlens_token', data.token);
     localStorage.setItem('truthlens_user', JSON.stringify(data.user));
+    setLoading(false);
     return data;
   };
 
@@ -95,6 +111,7 @@ export function AuthProvider({ children }) {
     setUser(null);
     localStorage.removeItem('truthlens_token');
     localStorage.removeItem('truthlens_user');
+    setLoading(false);
   };
 
   return (
@@ -105,8 +122,10 @@ export function AuthProvider({ children }) {
       loading,
       login,
       signup,
+      register: signup,
       loginWithGoogle,
-      logout
+      logout,
+      checkAuth
     }}>
       {children}
     </AuthContext.Provider>

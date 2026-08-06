@@ -1,14 +1,16 @@
 :root {
-  /* Dark Theme Default Tokens (Apple OLED Liquid Glass) */
+  /* Dark Theme Tokens (Enterprise Dark AI Glass) */
   --bg-primary: #030712;
-  --bg-surface: rgba(15, 23, 42, 0.72);
-  --bg-glass: rgba(15, 23, 42, 0.55);
-  --bg-glass-hover: rgba(30, 41, 59, 0.78);
-  --bg-glass-active: rgba(51, 65, 85, 0.85);
+  --bg-surface: rgba(15, 23, 42, 0.75);
+  --bg-glass: rgba(15, 23, 42, 0.6);
+  --bg-glass-hover: rgba(30, 41, 59, 0.85);
+  --bg-glass-active: rgba(51, 65, 85, 0.9);
   --bg-dropzone: rgba(15, 23, 42, 0.45);
+  --bg-dropzone-active: rgba(56, 189, 248, 0.12);
+  
   --glass-border: rgba(255, 255, 255, 0.12);
   --glass-border-glow: rgba(56, 189, 248, 0.45);
-  --glass-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.75), 0 0 30px rgba(56, 189, 248, 0.1);
+  --glass-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.12);
   --glass-highlight: inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
   
   --text-primary: #f8fafc;
@@ -20,24 +22,29 @@
   --apple-accent-purple: #818cf8;
   --apple-accent-emerald: #10b981;
   --apple-accent-danger: #ef4444;
-  --apple-accent-gradient: linear-gradient(135deg, #0284c7 0%, #38bdf8 50%, #818cf8 100%);
-  --apple-liquid-gradient: linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(129, 140, 248, 0.1) 50%, rgba(236, 72, 153, 0.15) 100%);
+  --apple-accent-warning: #f59e0b;
   
-  --font-sans: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', Roboto, sans-serif;
-  --font-mono: 'SF Mono', 'JetBrains Mono', monospace;
+  --apple-accent-gradient: linear-gradient(135deg, #0284c7 0%, #38bdf8 50%, #818cf8 100%);
+  --apple-liquid-gradient: linear-gradient(135deg, rgba(56, 189, 248, 0.22) 0%, rgba(129, 140, 248, 0.12) 50%, rgba(236, 72, 153, 0.15) 100%);
+  --shimmer-gradient: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%);
+  
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
 }
 
 [data-theme='light'] {
-  /* Light Theme Tokens (Apple Pearl & Sunlit Glass) */
-  --bg-primary: #f1f5f9;
-  --bg-surface: rgba(255, 255, 255, 0.85);
-  --bg-glass: rgba(255, 255, 255, 0.78);
-  --bg-glass-hover: rgba(248, 250, 252, 0.95);
+  /* Light Theme Tokens (Sunlit Pearl Glass) */
+  --bg-primary: #f8fafc;
+  --bg-surface: rgba(255, 255, 255, 0.88);
+  --bg-glass: rgba(255, 255, 255, 0.8);
+  --bg-glass-hover: rgba(248, 250, 252, 0.98);
   --bg-glass-active: rgba(226, 232, 240, 0.95);
   --bg-dropzone: rgba(241, 245, 249, 0.85);
+  --bg-dropzone-active: rgba(2, 132, 199, 0.08);
+  
   --glass-border: rgba(203, 213, 225, 0.65);
   --glass-border-glow: rgba(2, 132, 199, 0.5);
-  --glass-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+  --glass-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04);
   --glass-highlight: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.95);
   
   --text-primary: #0f172a;
@@ -49,8 +56,11 @@
   --apple-accent-purple: #4f46e5;
   --apple-accent-emerald: #059669;
   --apple-accent-danger: #dc2626;
+  --apple-accent-warning: #d97706;
+  
   --apple-accent-gradient: linear-gradient(135deg, #0284c7 0%, #38bdf8 50%, #6366f1 100%);
   --apple-liquid-gradient: linear-gradient(135deg, rgba(224, 242, 254, 0.85) 0%, rgba(238, 242, 255, 0.7) 50%, rgba(252, 231, 243, 0.7) 100%);
+  --shimmer-gradient: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.04) 50%, rgba(0,0,0,0) 100%);
 }
 
 * {
@@ -85,11 +95,11 @@ body {
   position: absolute;
   top: -10%;
   left: 20%;
-  width: 600px;
-  height: 600px;
+  width: 650px;
+  height: 650px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.22) 0%, rgba(0, 0, 0, 0) 70%);
-  filter: blur(80px);
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, rgba(0, 0, 0, 0) 70%);
+  filter: blur(90px);
   animation: floatAurora1 18s ease-in-out infinite alternate;
 }
 
@@ -97,11 +107,11 @@ body {
   position: absolute;
   bottom: -10%;
   right: 15%;
-  width: 550px;
-  height: 550px;
+  width: 600px;
+  height: 600px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(129, 140, 248, 0.18) 0%, rgba(0, 0, 0, 0) 70%);
-  filter: blur(90px);
+  filter: blur(100px);
   animation: floatAurora2 22s ease-in-out infinite alternate;
 }
 
@@ -110,11 +120,11 @@ body {
   top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 500px;
-  height: 500px;
+  width: 550px;
+  height: 550px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
-  filter: blur(100px);
+  filter: blur(110px);
   animation: floatAurora3 25s ease-in-out infinite alternate;
 }
 
@@ -133,15 +143,15 @@ body {
   100% { transform: translate(-40%, -60%) scale(1.2); }
 }
 
-/* Apple Liquid Glass Panels & Components */
+/* Glassmorphism Components */
 .glass-card {
   background: var(--bg-glass);
   backdrop-filter: blur(28px) saturate(190%);
   -webkit-backdrop-filter: blur(28px) saturate(190%);
   border: 1px solid var(--glass-border);
-  border-radius: 22px;
+  border-radius: 24px;
   box-shadow: var(--glass-shadow), var(--glass-highlight);
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
   color: var(--text-primary);
@@ -154,7 +164,7 @@ body {
   left: -100%;
   width: 60%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
   transform: skewX(-25deg);
   pointer-events: none;
 }
@@ -168,28 +178,18 @@ body {
   100% { left: 200%; }
 }
 
+.glass-card-interactive {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .glass-card-interactive:hover {
   background: var(--bg-glass-hover);
   border-color: var(--glass-border-glow);
-  transform: translateY(-4px) scale(1.005);
-  box-shadow: 0 25px 60px -10px rgba(56, 189, 248, 0.22), var(--glass-highlight);
+  transform: translateY(-3px);
+  box-shadow: 0 20px 45px -10px rgba(56, 189, 248, 0.2), var(--glass-highlight);
 }
 
-/* Floating Apple Dock Styling */
-.floating-dock {
-  background: var(--bg-surface);
-  backdrop-filter: blur(32px) saturate(200%);
-  -webkit-backdrop-filter: blur(32px) saturate(200%);
-  border: 1px solid var(--glass-border);
-  border-radius: 28px;
-  padding: 8px 12px;
-  box-shadow: var(--glass-shadow), var(--glass-highlight);
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-}
-
-/* Apple Liquid Buttons */
+/* Buttons */
 .apple-glass-button {
   background: var(--bg-glass);
   backdrop-filter: blur(20px);
@@ -206,6 +206,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  outline: none;
 }
 
 .apple-glass-button:hover {
@@ -216,7 +217,7 @@ body {
 }
 
 .apple-glass-button:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
   background: var(--bg-glass-active);
 }
 
@@ -230,6 +231,11 @@ body {
   cursor: pointer;
   box-shadow: 0 8px 25px rgba(2, 132, 199, 0.35), var(--glass-highlight);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  outline: none;
 }
 
 .apple-primary-button:hover {
@@ -238,7 +244,27 @@ body {
 }
 
 .apple-primary-button:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
+}
+
+.apple-primary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Skeleton Loading Shimmer */
+.skeleton {
+  background: rgba(255, 255, 255, 0.06);
+  background-image: var(--shimmer-gradient);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 /* Custom Scrollbar */
@@ -258,4 +284,11 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.5);
+}
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+  .glass-card {
+    border-radius: 18px;
+  }
 }
